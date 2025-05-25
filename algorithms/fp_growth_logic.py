@@ -150,9 +150,12 @@ class FPGrowthAlgorithm:
                 # Lấy đường đi từ nút này lên gốc (không bao gồm nút item_name hiện tại)
                 single_path_to_root = []
                 temp_parent_node = path_node.parent
-                while temp_parent_node.item_name != 'root': # Lên đến khi gặp nút gốc (không phải root của FP-Tree)
+                # Điều kiện dừng được thay đổi để không phụ thuộc vào item_name cụ thể của root,
+                # mà dựa vào việc node cha của nó có phải là None không (tức là nó là root).
+                while temp_parent_node is not None and temp_parent_node.parent is not None:
                     single_path_to_root.append(temp_parent_node.item_name)
                     temp_parent_node = temp_parent_node.parent
+
                 
                 if single_path_to_root: # Chỉ thêm nếu đường đi không rỗng
                     # Đường đi đang ngược (từ node lên root), đảo lại
@@ -356,4 +359,3 @@ class FPGrowthAlgorithm:
                             notes=f"Số luật: {len(rules)} với min_confidence={min_confidence:.2f}")
         self.metrics.end_step(additional_info={"rules_generated": len(rules)})
         return rules
-

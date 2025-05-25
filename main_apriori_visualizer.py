@@ -1,5 +1,6 @@
 # main_apriori_visualizer.py
 import streamlit as st
+import math # Thêm dòng này
 import pandas as pd
 from algorithms.apriori_logic import AprioriAlgorithm
 from utils.data_loader import load_transactions_from_file, get_unique_items_from_transactions
@@ -21,7 +22,7 @@ uploaded_file = st.sidebar.file_uploader("Chọn file (đã tiền xử lý nế
 invoice_col_name = st.sidebar.text_input("Tên cột Mã Hóa Đơn/Giao Dịch", "InvoiceNo")
 item_col_name = st.sidebar.text_input("Tên cột Tên Sản Phẩm/Item", "Description")
 
-min_support_percentage = st.sidebar.slider("Ngưỡng Support Tối Thiểu (%)", 0.1, 10.0, 1.0, 0.1,
+min_support_percentage = st.sidebar.slider("Ngưỡng Support Tối Thiểu (%)", 0.1, 20.0, 0.5, 0.1,
                                            help="Tỷ lệ phần trăm giao dịch tối thiểu mà một itemset phải xuất hiện.")
 min_confidence_percentage = st.sidebar.slider("Ngưỡng Confidence Tối Thiểu (%)", 1.0, 100.0, 50.0, 1.0,
                                      help="Độ tin cậy tối thiểu của một luật kết hợp.")
@@ -46,7 +47,8 @@ if uploaded_file:
         - Số sản phẩm duy nhất đã xử lý: {len(unique_items_processed)}
         """)
 
-        min_support_count = int((min_support_percentage / 100.0) * num_total_transactions)
+        # Sửa đổi ở đây: sử dụng math.ceil để làm tròn lên
+        min_support_count = math.ceil((min_support_percentage / 100.0) * num_total_transactions)
         actual_min_support_percentage = (min_support_count / num_total_transactions) * 100 if num_total_transactions > 0 else 0
         
         st.sidebar.markdown("---")

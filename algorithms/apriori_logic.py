@@ -1,6 +1,7 @@
 # algorithms/apriori_logic.py
 from collections import defaultdict
 from itertools import combinations
+import math
 # PerformanceMetrics sẽ được truyền vào từ main visualizer script
 # from utils.metrics_collector import PerformanceMetrics 
 
@@ -43,34 +44,24 @@ class AprioriAlgorithm:
         return L1
 
     def _generate_candidates_Ck(self, Lk_minus_1_itemsets, k):
-        """Tạo tập ứng viên k-itemset (Ck) từ (k-1)-itemset phổ biến (Lk-1)."""
-        self.metrics.start_step(f"Apriori: Tạo C{k} - Bước Join")
-        candidates_Ck = set()
-        # Chuyển Lk-1 thành list các itemset để join
-        prev_frequent_items_list = list(Lk_minus_1_itemsets) # list of frozensets
+      """Tạo tập ứng viên k-itemset (Ck) từ (k-1)-itemset phổ biến (Lk-1)."""
+      self.metrics.start_step(f"Apriori: Tạo C{k} - Bước Join")
+      candidates_Ck = set()
+      prev_frequent_items_list = list(Lk_minus_1_itemsets) # list of frozensets
 
-        for i in range(len(prev_frequent_items_list)):
-            for j in range(i + 1, len(prev_frequent_items_list)):
-                itemset1 = prev_frequent_items_list[i]
-                itemset2 = prev_frequent_items_list[j]
-                
-                # Join condition: itemsets must have k-2 common items
-                # Sắp xếp các item trong itemset trước khi lấy slice để đảm bảo tính nhất quán
-                # Chuyển frozenset thành list, sắp xếp, rồi lấy slice
-                list1_sorted = sorted(list(itemset1))
-                list2_sorted = sorted(list(itemset2))
+      for i in range(len(prev_frequent_items_list)):
+          for j in range(i + 1, len(prev_frequent_items_list)):
+              itemset1 = prev_frequent_items_list[i]
+              itemset2 = prev_frequent_items_list[j]
+              union_set = itemset1 | itemset2
+              if len(union_set) == k:
+                  candidates_Ck.add(union_set)
 
-                if list1_sorted[:k-2] == list2_sorted[:k-2] and list1_sorted[k-2] < list2_sorted[k-2]:
-                    # Tạo ứng viên mới bằng cách union
-                    new_candidate = itemset1.union(itemset2)
-                    if len(new_candidate) == k: # Đảm bảo ứng viên có đúng k item
-                         candidates_Ck.add(new_candidate)
-        
-        self._log_step_data(f"C{k} - Ứng viên {k}-itemset (sau Join)", 
-                            list(candidates_Ck), k=k, # Lưu dạng list để dễ hiển thị
-                            notes=f"Số ứng viên sau join: {len(candidates_Ck)}")
-        self.metrics.end_step(additional_info={"candidates_after_join": len(candidates_Ck)})
-        return candidates_Ck
+      self._log_step_data(f"C{k} - Ứng viên {k}-itemset (sau Join)", 
+                          list(candidates_Ck), k=k,
+                          notes=f"Số ứng viên sau join: {len(candidates_Ck)}")
+      self.metrics.end_step(additional_info={"candidates_after_join": len(candidates_Ck)})
+      return candidates_Ck
 
     def _prune_candidates_Ck(self, Ck, Lk_minus_1_itemsets_set, k):
         """Bước tỉa: Loại bỏ các ứng viên trong Ck mà có tập con (k-1) không phổ biến."""

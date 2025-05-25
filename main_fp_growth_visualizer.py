@@ -1,8 +1,9 @@
 # main_fp_growth_visualizer.py
 import streamlit as st
+import math # Thêm dòng này
 import pandas as pd
 from algorithms.fp_growth_logic import FPGrowthAlgorithm, TreeNode # Cần TreeNode để check type
-from utils.data_loader import load_transactions_from_csv, get_unique_items_from_transactions
+from utils.data_loader import load_transactions_from_file, get_unique_items_from_transactions # Thay đổi ở đây
 from utils.metrics_collector import PerformanceMetrics
 from utils.visualizers import display_itemsets_table, display_rules_table, visualize_fp_tree_interactive
 
@@ -15,19 +16,19 @@ st.markdown("""
 
 # --- Sidebar ---
 st.sidebar.header("📁 Tải Dữ Liệu và Tham Số")
-uploaded_file = st.sidebar.file_uploader("Chọn file CSV (đã tiền xử lý nếu cần)", type="csv")
+uploaded_file = st.sidebar.file_uploader("Chọn file (đã tiền xử lý nếu cần)", type=['csv', 'xlsx', 'xls']) # Thay đổi ở đây
 
 invoice_col_name = st.sidebar.text_input("Tên cột Mã Hóa Đơn/Giao Dịch", "InvoiceNo")
 item_col_name = st.sidebar.text_input("Tên cột Tên Sản Phẩm/Item", "Description")
 
-min_support_percentage = st.sidebar.slider("Ngưỡng Support Tối Thiểu (%)", 0.1, 10.0, 1.0, 0.1,
+min_support_percentage = st.sidebar.slider("Ngưỡng Support Tối Thiểu (%)", 0.1, 20.0, 0.5, 0.1,
                                            help="Tỷ lệ phần trăm giao dịch tối thiểu mà một itemset phải xuất hiện.")
 min_confidence_percentage = st.sidebar.slider("Ngưỡng Confidence Tối Thiểu (%)", 1.0, 100.0, 50.0, 1.0,
                                      help="Độ tin cậy tối thiểu của một luật kết hợp.")
 
 # --- Main Area ---
 if uploaded_file:
-    transactions, initial_trans_count, initial_items_count = load_transactions_from_csv(
+    transactions, initial_trans_count, initial_items_count = load_transactions_from_file( # Thay đổi ở đây
         uploaded_file,
         invoice_col=invoice_col_name,
         item_col=item_col_name
@@ -45,7 +46,8 @@ if uploaded_file:
         - Số sản phẩm duy nhất đã xử lý: {len(unique_items_processed)}
         """)
 
-        min_support_count = int((min_support_percentage / 100.0) * num_total_transactions)
+        # Sửa đổi ở đây: sử dụng math.ceil để làm tròn lên
+        min_support_count = math.ceil((min_support_percentage / 100.0) * num_total_transactions)
         actual_min_support_percentage = (min_support_count / num_total_transactions) * 100 if num_total_transactions > 0 else 0
         
         st.sidebar.markdown("---")
@@ -143,15 +145,19 @@ if uploaded_file:
                             
                             data_content = step_log.get('data', {})
                             
-                            # Trực quan hóa cây nếu có
+                            # Trực quan hóa cây và header table nếu có
                             tree_to_visualize = step_log.get('tree_dot_object') # Đây là root_node
-                            header_table_for_vis = step_log.get('header_table')
+                            header_table_for_vis = step_log.get('header_table') # Đây là header_table
 
                             if isinstance(tree_to_visualize, TreeNode) and header_table_for_vis:
-                                visualize_fp_tree_interactive(st, tree_to_visualize, header_table_for_vis, title=f"Trực quan hóa cho: {step_log['step_name']}")
-                            elif header_table_for_vis and not tree_to_visualize: # Chỉ có header table (ví dụ cây rỗng)
-                                visualize_fp_tree_interactive(st, None, header_table_for_vis, title=f"Header Table cho: {step_log['step_name']}")
-
+                                visualize_fp_tree_interactive(st, tree_to_visualize, header_table_for_vis,
+                                                              title=f"Trực quan hóa cho: {step_log['step_name']}",
+                                                              graph_size="7,5") # Kích thước cho cây trung gian
+                            elif header_table_for_vis and not tree_to_visualize: # Chỉ có header table (ví dụ cây rỗng hoặc bước không tạo cây)
+                                # visualize_fp_tree_interactive xử lý trường hợp tree_root là None và chỉ hiển thị header table
+                                visualize_fp_tree_interactive(st, None, header_table_for_vis,
+                                                              title=f"Thông tin Header Table cho: {step_log['step_name']}",
+                                                              graph_size="7,5") # graph_size có thể không ảnh hưởng nếu chỉ là table
 
                             # Hiển thị dữ liệu khác của bước
                             if data_content:
@@ -201,4 +207,3 @@ else:
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("Đồ án KHDL - So sánh Apriori và FP-Growth")
-
