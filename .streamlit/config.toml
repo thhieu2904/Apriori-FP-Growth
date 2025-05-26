@@ -1,0 +1,16 @@
+# c:\MySource\myCourse\2-2425\KhaiPhaDuLieu\DOAN\Demo\.streamlit\config.toml
+
+[theme]
+# Màu chính được sử dụng cho các widget tương tác (nút, slider, v.v.)
+primaryColor="#3f51b5"  # Indigo
+
+# Màu nền cho toàn bộ ứng dụng (main content area)
+# backgroundColor="#ffffff" # Giữ trắng mặc định hoặc bạn có thể chọn màu sáng khác
+
+
+
+# Màu chữ chính trong ứng dụng
+# textColor="#31333F" # Giữ đen/xám đậm mặc định cho main content
+
+# Font chữ (tùy chọn)
+# font="sans serif"

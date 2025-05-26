@@ -51,8 +51,8 @@ class FPGrowthAlgorithm:
         # Sắp xếp theo tần suất giảm dần, sau đó theo tên item (để ổn định)
         ordered_frequent_items = sorted(
             frequent_1_itemsets_counts.keys(),
-            key=lambda item: (frequent_1_itemsets_counts[item], item),
-            reverse=True
+            # Sửa key sort: giảm theo count (dùng dấu trừ), tăng theo tên item
+            key=lambda item: (-frequent_1_itemsets_counts[item], item)
         )
         
         self._log_step_data("1-itemset phổ biến (L1) và Thứ tự", 
@@ -63,6 +63,30 @@ class FPGrowthAlgorithm:
         if not ordered_frequent_items:
             return None, None # Không có item phổ biến nào
         return frequent_1_itemsets_counts, ordered_frequent_items
+
+    def _is_single_path(self, tree_node: TreeNode):
+        """Kiểm tra xem cây (hoặc nhánh) bắt đầu từ tree_node có phải là một đường đi đơn không."""
+        if not tree_node: return True # Cây rỗng
+        current = tree_node
+        while current and current.children:
+            if len(current.children) > 1:
+                return False # Nút có nhiều hơn 1 con
+            current = list(current.children.values())[0] # Di chuyển xuống con duy nhất
+        return True
+
+    def _extract_items_counts_from_single_path(self, tree_node: TreeNode):
+        """Trích xuất danh sách (item, count) từ một đường đi đơn, bắt đầu từ các con của tree_node."""
+        path_items_counts = []
+        # Bắt đầu từ con đầu tiên của tree_node (nếu có)
+        # Trong ngữ cảnh cây điều kiện, tree_node là root của cây điều kiện.
+        current = tree_node 
+        while current and current.children: # Bắt đầu duyệt từ các con của root (nếu có)
+            # Vì là single path, chỉ có 1 con (hoặc không có con nào nếu là lá)
+            current = list(current.children.values())[0] 
+            path_items_counts.append((current.item_name, current.count))
+            if not current.children: # Đã đến nút lá của path
+                break
+        return path_items_counts
 
     def _build_fp_tree(self, ordered_transactions, frequent_1_item_counts):
         """
@@ -135,12 +159,48 @@ class FPGrowthAlgorithm:
             key=lambda item_data_pair: item_data_pair[1]['count'] # Sắp theo count
         )
 
+        # [Thêm vào] Kiểm tra nếu cây hiện tại là một đường đi đơn
+        if self._is_single_path(current_tree_root):
+            self._log_step_data(f"Xử lý Single Path cho tiền tố {list(prefix_path) if prefix_path else '{}'}",
+                                {"message": "Cây hiện tại là một đường đi đơn. Tạo tổ hợp trực tiếp."},
+                                notes=f"Tiền tố hiện tại: {prefix_path}",
+                                tree_dot=current_tree_root, header_table_data=current_header_table)
+            
+            path_items_with_counts = self._extract_items_counts_from_single_path(current_tree_root)
+            
+            if path_items_with_counts:
+                self._log_step_data(f"Items trên Single Path (cho tiền tố {prefix_path})", 
+                                    {"items_on_path": path_items_with_counts})
+
+                items_on_path = [item for item, count in path_items_with_counts]
+                item_counts_on_path_map = dict(path_items_with_counts)
+
+                for i in range(1, len(items_on_path) + 1):
+                    for combination_tuple in combinations(items_on_path, i):
+                        # Kết hợp tổ hợp này với tiền tố hiện tại
+                        current_combination_fset = frozenset(combination_tuple)
+                        new_frequent_itemset = prefix_path.union(current_combination_fset)
+                        
+                        # Support của itemset này là min count của các item trong combination_tuple trên path
+                        support_for_combination = min(item_counts_on_path_map[item] for item in combination_tuple)
+                        
+                        self.frequent_itemsets_final[new_frequent_itemset] = support_for_combination
+                        self._log_step_data(f"Tạo mẫu từ Single Path (tiền tố {prefix_path})",
+                                            {"pattern": new_frequent_itemset, "support": support_for_combination, 
+                                             "combination_from_path": current_combination_fset},
+                                            notes=f"Tổ hợp {current_combination_fset} với support {support_for_combination} từ single path.")
+            self.metrics.end_step(additional_info={"is_single_path_optimization": True, "items_in_path": len(path_items_with_counts)})
+            return # Kết thúc đệ quy cho nhánh này
+        # [Kết thúc thêm vào]
+
         for item_name, item_data in sorted_items_in_header:
             # Tạo frequent itemset mới: prefix + item_name
             new_frequent_itemset = prefix_path.union(frozenset([item_name]))
-            self.frequent_itemsets_final[new_frequent_itemset] = item_data['count']
-            
-            self.metrics.start_step(f"FP-Growth: Khai phá cho item '{item_name}' với tiền tố {list(prefix_path) if prefix_path else '{}'}")
+            # Chỉ thêm nếu count này (là support của item_name trong cây hiện tại) >= min_sup_count
+            # Điều này đã được đảm bảo bởi vì item_data['count'] là từ header table của cây (có điều kiện)
+            # mà các item trong header table đó đã được lọc theo min_sup_count trong ngữ cảnh đó.
+            self.frequent_itemsets_final[new_frequent_itemset] = item_data['count'] 
+            self.metrics.start_step(f"FP-Growth: Khai phá cho '{item_name}' (tiền tố {list(prefix_path) if prefix_path else '{}'})")
 
             # 1. Xây dựng Conditional Pattern Base (CPB)
             conditional_pattern_base = []

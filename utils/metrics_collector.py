@@ -3,6 +3,7 @@ import time
 import psutil
 import os
 from collections import defaultdict
+from typing import Optional # Thêm Optional vào đây
 
 class PerformanceMetrics:
     def __init__(self):
@@ -124,3 +125,18 @@ class PerformanceMetrics:
             "nodes_in_fp_tree": self.fp_nodes_in_tree,
             "conditional_fp_trees_built": self.fp_conditional_trees_built,
         }
+
+    def get_node_count_for_step(self, step_name_to_find: str) -> Optional[int]:
+        """
+        Lấy số lượng nút được ghi nhận cho một bước cụ thể.
+        Giả sử số nút được lưu trong additional_info với key 'nodes_in_tree' 
+        (dùng cho cây FP-Tree chính) hoặc một key tương tự cho cây điều kiện nếu bạn có log riêng.
+        """
+        for step_metric in self.step_timings: # Duyệt qua self.step_timings
+            if step_metric.get("step_name") == step_name_to_find:
+                additional_info = step_metric.get("additional_info", {})
+                # Ưu tiên key 'nodes_in_tree' mà bạn đã dùng trong fp_growth_logic.py
+                if "nodes_in_tree" in additional_info:
+                    return additional_info["nodes_in_tree"]
+                # Bạn có thể thêm các key khác ở đây nếu cần, ví dụ: 'conditional_tree_node_count'
+        return None # Không tìm thấy thông tin số nút cho bước này
