@@ -186,4 +186,3 @@ project/
 ---
 
 Hy vọng bạn tìm thấy dự án này hữu ích và dễ sử dụng! Nếu có bất kỳ câu hỏi, góp ý hoặc phát hiện lỗi, vui lòng tạo một "Issue" trên repository GitHub của dự án.
-````
