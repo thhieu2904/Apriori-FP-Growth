@@ -101,22 +101,24 @@ Dự án này cung cấp một bộ công cụ trực quan và mạnh mẽ để
 
 Dự án được tổ chức như sau:
 
-your_project_root/
+````text
+project/
 ├── .streamlit/
-│ └── config.toml # File cấu hình theme cho Streamlit
-├── main_apriori_visualizer.py # Giao diện Streamlit cho thuật toán Apriori
-├── main_fp_growth_visualizer.py # Giao diện Streamlit cho thuật toán FP-Growth
+│   └── config.toml                # File cấu hình theme cho Streamlit
 ├── algorithms/
-│ ├── apriori_logic.py # Logic triển khai thuật toán Apriori
-│ └── fp_growth_logic.py # Logic triển khai thuật toán FP-Growth
+│   ├── apriori_logic.py           # Logic thuật toán Apriori
+│   └── fp_growth_logic.py         # Logic thuật toán FP-Growth
+├── data/                          # Dữ liệu mẫu
+│   └── online_retail.csv
 ├── utils/
-│ ├── data_loader.py # Module xử lý tải và tiền xử lý dữ liệu đầu vào
-│ ├── metrics_collector.py # Module thu thập và báo cáo số liệu hiệu năng
-│ └── visualizers.py # Module hỗ trợ trực quan hóa kết quả (bảng, cây)
-├── data/ # Thư mục chứa dữ liệu mẫu (người dùng tự thêm)
-│ └── (ví dụ: online_retail.csv, groceries.csv)
-├── goi_y_loc_theo_CusID_va_Quoc_gia.md # Ghi chú gợi ý các giá trị lọc cho dữ liệu Online Retail
-└── README.md # File hướng dẫn này
+│   ├── data_loader.py             # Tải và xử lý dữ liệu
+│   ├── metrics_collector.py       # Đo lường hiệu năng
+│   └── visualizers.py             # Trực quan hóa dữ liệu
+├── goi_y_loc_theo_CusID_va_Quoc_gia.md # Ghi chú gợi ý các giá trị lọc
+├── main_apriori_visualizer.py     # Giao diện Streamlit Apriori
+├── main_fp_growth_visualizer.py   # Giao diện Streamlit FP-Growth
+└── README.md                      # File hướng dẫn này
+
 
 ---
 
@@ -184,3 +186,4 @@ your_project_root/
 ---
 
 Hy vọng bạn tìm thấy dự án này hữu ích và dễ sử dụng! Nếu có bất kỳ câu hỏi, góp ý hoặc phát hiện lỗi, vui lòng tạo một "Issue" trên repository GitHub của dự án.
+````
