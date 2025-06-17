@@ -5,7 +5,8 @@ import pandas as pd
 from algorithms.fp_growth_logic import FPGrowthAlgorithm, TreeNode
 from utils.data_loader import load_transactions_from_file, get_unique_items_from_transactions, parse_text_area_transactions, parse_tx_format_transactions
 from utils.metrics_collector import PerformanceMetrics
-from utils.visualizers import display_itemsets_table, display_rules_table, visualize_fp_tree_interactive
+from utils.visualizers import display_itemsets_table, display_rules_table, visualize_fp_tree_interactive, display_simplified_rules_table, display_top_rules_network_graph
+
 
 st.set_page_config(layout="wide", page_title="FP-Growth Visualizer")
 st.title("🌳 Trình Trực Quan Hóa Thuật Toán FP-Growth")
@@ -342,6 +343,21 @@ if transactions is not None:
                     st.success(f"Tìm thấy {len(rules)} luật kết hợp.")
                     display_rules_table(st, f"Các Luật Kết Hợp (min_confidence={min_confidence_threshold:.2f})", 
                                         rules, num_total_transactions)
+                     #xử lý hiển thị biểu đồ và bảng luật tốt nhất 
+                    #xử lý rules
+                    rules = st.session_state.get("fpgrowth_rules", [])
+                    rules_df = pd.DataFrame(rules)
+                    
+                    top_rules_df = rules_df.sort_values(by='lift', ascending=False).head(5)
+
+                    # Phần 1: Bảng Việt hóa
+                    display_simplified_rules_table(st, top_rules_df)
+
+                   
+                        # Phần 2: Biểu đồ 10 luật tốt nhất
+                    display_top_rules_network_graph(st, top_rules_df)
+
+                    st.markdown("---")
     else: 
         if input_method == "Tải file lên" and uploaded_file: 
             st.warning("Không thể xử lý file dữ liệu đã tải lên. Vui lòng kiểm tra định dạng và nội dung file.")

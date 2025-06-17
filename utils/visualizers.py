@@ -2,6 +2,8 @@
 import graphviz
 import pandas as pd
 import streamlit as st
+from pyvis.network import Network
+import streamlit.components.v1 as components
 
 def display_itemsets_table(st_container, title, itemsets_data, k=None, support_type="Count"):
     """
@@ -245,3 +247,66 @@ def display_rules_table(st_container, title, rules_data, num_transactions):
     # Sắp xếp theo Lift và Confidence giảm dần
     rules_df_sorted = rules_df.sort_values(by=['Lift', 'Confidence'], ascending=[False, False])
     st_container.dataframe(rules_df_sorted)
+
+# HÀM MỚI 1: HIỂN THỊ BẢNG VIỆT HÓA
+def display_simplified_rules_table(st_container, rules_df):
+    """
+    Hiển thị bảng luật kết hợp đã được đơn giản hóa với ngôn ngữ tự nhiên và emoji.
+    """
+    st_container.markdown("#### Bảng Gợi ý Hành động")
+    if rules_df.empty:
+        st_container.info("Không có luật nào để hiển thị.")
+        return
+
+    display_data = []
+    for _, rule in rules_df.iterrows():
+        antecedent_str = ", ".join(rule['antecedent'])
+        consequent_str = ", ".join(rule['consequent'])
+        lift = rule.get('lift', 0)
+
+        # Quyết định độ mạnh dựa trên Lift
+        strength_emoji = "💪"
+        if lift > 2.0:
+            strength_emoji = "🔥🔥🔥"
+        elif lift > 1.5:
+            strength_emoji = "🔥🔥"
+        
+        display_data.append({
+            "Gợi ý": f"Khách mua **{antecedent_str}** có xu hướng mua kèm **{consequent_str}**",
+            "Độ mạnh": strength_emoji
+        })
+    
+    simplified_df = pd.DataFrame(display_data)
+    st_container.dataframe(simplified_df, hide_index=True)
+
+
+# HÀM MỚI 2: HIỂN THỊ BIỂU ĐỒ MẠNG LƯỚI TOP 10
+def display_top_rules_network_graph(st_container, rules_df):
+    """
+    Vẽ một biểu đồ mạng lưới tĩnh, tối giản cho các luật kết hợp tốt nhất.
+    """
+    st_container.markdown("#### Biểu đồ các mối liên hệ mạnh nhất")
+    if rules_df.empty:
+        st_container.info("Không có luật nào để vẽ biểu đồ.")
+        return
+
+    net = Network(height="400px", width="100%", bgcolor="#222222", font_color="white", notebook=True, directed=True)
+    
+    for _, rule in rules_df.iterrows():
+        antecedents = list(rule['antecedent'])
+        consequents = list(rule['consequent'])
+        lift = rule.get('lift', 0)
+
+        for a in antecedents:
+            for c in consequents:
+                net.add_node(a, label=a, title=a)
+                net.add_node(c, label=c, title=c)
+                # Dùng lift để quyết định độ dày của cạnh
+                edge_width = max(1, lift * 0.7)
+                net.add_edge(a, c, width=edge_width, title=f"Lift: {lift:.2f}")
+
+    try:
+        net.save_graph("top_rules_network.html")
+        components.html(open("top_rules_network.html", 'r', encoding='utf-8').read(), height=410)
+    except Exception as e:
+        st_container.error(f"Lỗi khi vẽ biểu đồ: {e}")
