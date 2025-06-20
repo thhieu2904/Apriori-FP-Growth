@@ -247,43 +247,49 @@ def display_rules_table(st_container, title, rules_data, num_transactions):
     # Sắp xếp theo Lift và Confidence giảm dần
     rules_df_sorted = rules_df.sort_values(by=['Lift', 'Confidence'], ascending=[False, False])
     st_container.dataframe(rules_df_sorted)
-
-# HÀM MỚI 1: HIỂN THỊ BẢNG VIỆT HÓA
-def display_simplified_rules_table(st_container, rules_df):
+# HÀM MỚI 1: BẢNG VIỆT HÓA (PHIÊN BẢN CÓ MÀU SẮC)
+def display_simplified_rules_table(st_container, rules_df, item_color_map):
     """
-    Hiển thị bảng luật kết hợp đã được đơn giản hóa với ngôn ngữ tự nhiên và emoji.
+    Hiển thị bảng luật kết hợp đơn giản hóa với màu sắc cho từng sản phẩm.
     """
     st_container.markdown("#### Bảng Gợi ý Hành động")
     if rules_df.empty:
         st_container.info("Không có luật nào để hiển thị.")
         return
 
-    display_data = []
+    col1, col2 = st_container.columns([4, 1])
+    col1.markdown("**Gợi ý**")
+    col2.markdown("<p style='text-align: center;'><b>Độ mạnh</b></p>", unsafe_allow_html=True)
+
     for _, rule in rules_df.iterrows():
-        antecedent_str = ", ".join(rule['antecedent'])
-        consequent_str = ", ".join(rule['consequent'])
+        # Hàm nội bộ để tô màu cho tên sản phẩm
+        def get_colored_text(items, color_map):
+            colored_items = []
+            for item in items:
+                color = color_map.get(item, '#FFFFFF') # Mặc định màu trắng nếu không tìm thấy
+                colored_items.append(f"<span style='color: {color}; font-weight: bold;'>{item}</span>")
+            return ", ".join(colored_items)
+
+        antecedent_str = get_colored_text(rule['antecedent'], item_color_map)
+        consequent_str = get_colored_text(rule['consequent'], item_color_map)
         lift = rule.get('lift', 0)
 
-        # Quyết định độ mạnh dựa trên Lift
         strength_emoji = "💪"
         if lift > 2.0:
             strength_emoji = "🔥🔥🔥"
         elif lift > 1.5:
             strength_emoji = "🔥🔥"
         
-        display_data.append({
-            "Gợi ý": f"Khách mua **{antecedent_str}** có xu hướng mua kèm **{consequent_str}**",
-            "Độ mạnh": strength_emoji
-        })
-    
-    simplified_df = pd.DataFrame(display_data)
-    st_container.dataframe(simplified_df, hide_index=True)
+        col1_disp, col2_disp = st_container.columns([4, 1])
+        
+        col1_disp.markdown(f"Khách mua {antecedent_str} có xu hướng mua kèm {consequent_str}", unsafe_allow_html=True)
+        col2_disp.markdown(f"<p style='text-align: center; font-size: 1.5em;'>{strength_emoji}</p>", unsafe_allow_html=True)
 
 
-# HÀM MỚI 2: HIỂN THỊ BIỂU ĐỒ MẠNG LƯỚI TOP 10
-def display_top_rules_network_graph(st_container, rules_df):
+# HÀM MỚI 2: BIỂU ĐỒ MẠNG LƯỚI (PHIÊN BẢN CÓ MÀU SẮC)
+def display_top_rules_network_graph(st_container, rules_df, item_color_map):
     """
-    Vẽ một biểu đồ mạng lưới tĩnh, tối giản cho các luật kết hợp tốt nhất.
+    Vẽ biểu đồ mạng lưới với các nút được tô màu theo sản phẩm.
     """
     st_container.markdown("#### Biểu đồ các mối liên hệ mạnh nhất")
     if rules_df.empty:
@@ -299,9 +305,12 @@ def display_top_rules_network_graph(st_container, rules_df):
 
         for a in antecedents:
             for c in consequents:
-                net.add_node(a, label=a, title=a)
-                net.add_node(c, label=c, title=c)
-                # Dùng lift để quyết định độ dày của cạnh
+                color_a = item_color_map.get(a, '#FFFFFF')
+                color_c = item_color_map.get(c, '#FFFFFF')
+
+                net.add_node(a, label=a, title=a, color=color_a)
+                net.add_node(c, label=c, title=c, color=color_c)
+                
                 edge_width = max(1, lift * 0.7)
                 net.add_edge(a, c, width=edge_width, title=f"Lift: {lift:.2f}")
 

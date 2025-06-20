@@ -39,6 +39,8 @@ Dự án này cung cấp một bộ công cụ trực quan và mạnh mẽ để
   - Hiển thị rõ ràng **các tập mục phổ biến** với số đếm support của chúng.
   - Trình bày **luật kết hợp** cùng các chỉ số quan trọng: Support, Confidence, và Lift.
   - Theo dõi các bước trung gian và log của thuật toán.
+  - **Bảng Tóm Tắt Luật Kết Hợp:** Cung cấp cái nhìn tổng quan, dễ hiểu về các luật kết hợp hàng đầu, được Việt hóa và đánh giá mức độ mạnh yếu của luật (ví dụ: "Rất Mạnh", "Khá Mạnh"). Giúp người dùng nhanh chóng xác định các mối quan hệ quan trọng.
+  - **Biểu Đồ Mạng Lưới Luật Kết Hợp:** Trực quan hóa các luật kết hợp hàng đầu dưới dạng biểu đồ mạng tương tác. Các nút (sản phẩm) và cạnh (luật) được hiển thị rõ ràng, giúp người dùng dễ dàng nhận diện các sản phẩm thường được mua cùng nhau và mức độ liên quan của chúng. Các nút được tô màu để phân biệt trực quan hơn.
 
 - **Đo Lường & So Sánh Hiệu Năng:**
 
@@ -64,6 +66,7 @@ Dự án này cung cấp một bộ công cụ trực quan và mạnh mẽ để
 - **Graphviz:** Trực quan hóa cấu trúc cây FP-Tree.
 - **Psutil:** Thu thập thông tin về sử dụng bộ nhớ hệ thống (được sử dụng bởi `metrics_collector.py`).
 - **Openpyxl:** Đọc và ghi file định dạng Excel.
+- **Pyvis:** Tạo biểu đồ mạng lưới tương tác cho các luật kết hợp.
 
 ---
 
@@ -101,7 +104,7 @@ Dự án này cung cấp một bộ công cụ trực quan và mạnh mẽ để
 
 Dự án được tổ chức như sau:
 
-````text
+```text
 project/
 ├── .streamlit/
 │   └── config.toml                # File cấu hình theme cho Streamlit
@@ -118,7 +121,7 @@ project/
 ├── main_apriori_visualizer.py     # Giao diện Streamlit Apriori
 ├── main_fp_growth_visualizer.py   # Giao diện Streamlit FP-Growth
 └── README.md                      # File hướng dẫn này
- ````
+```
 
 ---
 
@@ -167,10 +170,15 @@ project/
 4.  **Thiết Lập Tham Số Thuật Toán:** Điều chỉnh `Ngưỡng Support Tối Thiểu (%)` và `Ngưỡng Confidence Tối Thiểu (%)` cho phù hợp với bộ dữ liệu và mục tiêu phân tích của bạn.
 5.  **Chạy Phân Tích:** Nhấn nút "🚀 Chạy Thuật Toán..."
 6.  **Khám Phá Kết Quả:**
+
     - **Tab "Tổng Quan & Số Liệu":** Xem xét thời gian chạy, mức sử dụng bộ nhớ và các thống kê chung.
     - **Tab "Bước Trung Gian" / "Bước Trung Gian & FP-Tree":** Theo dõi các bước xử lý của thuật toán. Với FP-Growth, đây là nơi bạn có thể thấy FP-Tree được trực quan hóa.
     - **Tab "Tập Mục Phổ Biến":** Xem danh sách các itemset thường xuyên xuất hiện cùng nhau.
-    - **Tab "Luật Kết Hợp":** Phân tích các luật được sinh ra, chú ý đến các chỉ số support, confidence, và lift.
+    - **Tab "Luật Kết Hợp":**
+      - Phân tích các luật được sinh ra, chú ý đến các chỉ số support, confidence, và lift.
+      - **Bảng tóm tắt các luật hàng đầu:** Xem phiên bản Việt hóa và đánh giá trực quan về độ mạnh của các luật quan trọng nhất.
+      - **Biểu đồ mạng lưới:** Khám phá mối quan hệ giữa các sản phẩm thông qua biểu đồ tương tác, hiển thị trực quan các luật kết hợp mạnh nhất.
+
 7.  **Thử Nghiệm & So Sánh:**
     - Thay đổi các ngưỡng support và confidence để xem kết quả thay đổi như thế nào.
     - Chạy cả hai ứng dụng Apriori và FP-Growth trên cùng một bộ dữ liệu và tham số để so sánh trực tiếp kết quả và hiệu suất.

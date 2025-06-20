@@ -337,25 +337,61 @@ if transactions is not None:
             with tab4:
                 st.header("📜 Luật Kết Hợp")
                 rules = st.session_state.get("fpgrowth_rules", [])
+                
                 if not rules:
                     st.info(f"Không có luật kết hợp nào được tạo ra với min_confidence = {min_confidence_threshold:.2f} (hoặc không có tập mục phổ biến nào để sinh luật).")
                 else:
+                    # --- PHẦN 1: Hiển thị như cũ ---
                     st.success(f"Tìm thấy {len(rules)} luật kết hợp.")
+                    # Hiển thị bảng đầy đủ trước tiên theo ý bạn
                     display_rules_table(st, f"Các Luật Kết Hợp (min_confidence={min_confidence_threshold:.2f})", 
                                         rules, num_total_transactions)
-                     #xử lý hiển thị biểu đồ và bảng luật tốt nhất 
-                    #xử lý rules
-                    rules = st.session_state.get("fpgrowth_rules", [])
+
+                    # --- PHẦN 2: Thêm phần tóm tắt màu sắc ở dưới ---
+                    st.markdown("---")
+                    st.subheader("⭐ Tóm tắt trực quan (Top 10 luật có Lift cao nhất)")
+                    
                     rules_df = pd.DataFrame(rules)
                     
-                    top_rules_df = rules_df.sort_values(by='lift', ascending=False).head(5)
+                    if 'lift' in rules_df.columns and not rules_df.empty:
+                        # Sắp xếp và lấy ra 10 luật tốt nhất
+                        top_rules_df = rules_df.sort_values(by='lift', ascending=False).head(10)
 
-                    # Phần 1: Bảng Việt hóa
-                    display_simplified_rules_table(st, top_rules_df)
+                        # --- Logic tạo bảng màu cho sản phẩm ---
+                        unique_items_in_top_rules = set()
+                        for items in top_rules_df['antecedent']:
+                            unique_items_in_top_rules.update(items)
+                        for items in top_rules_df['consequent']:
+                            unique_items_in_top_rules.update(items)
+                        
+                        colors = [
+                        '#E63946',  # Đỏ
+                        '#1D3557',  # Xanh đậm
+                        '#457B9D',  # Xanh dương
+                        '#2A9D8F',  # Xanh ngọc
+                        '#F4A261',  # Cam
+                        '#6A040F',  # Đỏ rượu vang
+                        '#0077B6',  # Xanh biển
+                        '#588157',  # Xanh lá
+                        '#7B2CBF',  # Tím
+                        '#4361EE',  # Tím xanh
+                        '#E5989B',  # Hồng đậm
+                        '#BC6C25'   # Nâu
+                    ]
+                        item_color_map = {item: colors[i % len(colors)] for i, item in enumerate(unique_items_in_top_rules)}
+                        # --- Kết thúc logic tạo bảng màu ---
 
-                   
-                        # Phần 2: Biểu đồ 10 luật tốt nhất
-                    display_top_rules_network_graph(st, top_rules_df)
+                        # Chia đôi màn hình để hiển thị bảng và biểu đồ
+                        
+                            # Truyền bảng màu vào hàm
+                        display_simplified_rules_table(st, top_rules_df, item_color_map)
+                        
+                        st.markdown("---")
+                        st.subheader("🌐 Biểu đồ mạng của các luật kết hợp (Top 10)")
+                        # Truyền bảng màu vào hàm
+                        display_top_rules_network_graph(st, top_rules_df, item_color_map)
+                    else:
+                        st.warning("Không có cột 'lift' trong dữ liệu luật để tạo bảng tóm tắt.")
 
                     st.markdown("---")
     else: 
